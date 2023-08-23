@@ -1,2 +1,2 @@
-# RefinamentoE-commerce
-Refinamento Conceitual de Banco de Dados E-Commerce
+# Refinamento Conceitual
+Refinamento Conceitual de Banco de Dados Curso DIO
