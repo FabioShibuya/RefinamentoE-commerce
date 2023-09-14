@@ -1,1 +1,358 @@
+-- Criação do Banco de dados para o cenario de E-commerce
+ -- drop database ecommerce;
+create database ecommerce;
+use ecommerce;
+
+-- Criar tabela Cliente
+create table clients(
+	   idClient int auto_increment primary key,
+       Fname varchar(10),
+	   Lname varchar(15),
+       Minit varchar(1),
+       CPF char(11) not null,
+       Address varchar(100),
+       constraint unique_cpf_cliente unique (CPF) 
+);
+
+-- Auto incrementa todas as tabelas
+alter table clients auto_increment=1;
+-- dop table produto;
+-- Criar tabela Produto
+create table product(
+	   idProduct int auto_increment primary key,
+       Pname varchar(80) not null,
+       Classification_kids bool default false,
+       Category enum('Eletrônico', 'Vestimento', 'Brinquedos', 'Alimentos', 'Móveis') not null,
+       avaliação float default 0,
+       size varchar(10)
+);
+-- drop table payments;
+-- Criar tabela Pagamento
+create table payments(
+	   idPayment int auto_increment primary key,
+       idClient int,
+       typePayments enum('Boleto', 'Cartão', 'Dois cartões'),
+       limitAvaliable float,
+       constraint fk_payment_client foreign key (idPayment) references clients(idClient)
+);
+
+              
+-- Criar tabela Pagamento
+create table paycard(
+	   payCard int auto_increment primary key,
+       idPayment int,
+       Bandeira enum ('MasterCArd', 'Visa'),
+       numberCard char(16) not null,
+       validCardMes char(02) not null,
+       validCardAno char(02) not null,
+       cvcCard char(03) not null,
+       constraint fk_payment_cartao_client foreign key (payCard) references payments(idPayment)
+       );
+       
+
+-- Criar tabela Pedido
+create table orders(
+	   idOrder int auto_increment primary key,
+       idOrderClient int,
+       orderStatus enum('Cancelado', 'Confirmado', 'Em processamento') default 'Em processamento' ,
+       orderDescription	varchar(250),
+       sendValue float default 10,
+       paymentCash boolean default false,
+       constraint fk_order_client foreign key (idOrderClient) references clients(idClient)
+       on update cascade
+);
+
+-- Criar tabela Estoque
+create table productStorage(
+	   idProdStorage int auto_increment primary key,
+       storageLocation varchar(250),
+       quantity int default 0
+);
+
+-- Criar tabela Fornecedor
+create table supplier(
+	   idSupplier int auto_increment primary key,
+       SocialName varchar(250) not null,
+       CNPJ char(15) not null,
+       contact char(11) not null,
+       constraint unique_supplier unique(CNPJ)
+);
+
+-- Criar tabela Vendedor
+create table seller(
+	   idSeller int auto_increment primary key,
+       SocialName varchar(250) not null,
+       AbstName varchar(250),
+       CNPJ char(15),
+       CPF char(09),
+       location varchar(30),
+       contact char(11) not null,
+       constraint unique_cnpj_seller unique(CNPJ),
+       constraint unique_cpf_seller unique(CPF)
+);
+
+-- primary key(idPseller, idProduct) >> definindo chave composta de 2 tabelas
+--  Definição de constraint onde a chave estrangeira vai vir de uma chave gerada a partir da tabela product da chave (idProduct)
+-- Criar tabela Relacioanmento de tabelas Produt/Vendedor
+create table productSeller(
+	   idPseller int,
+       idProduct int,
+       prodQuantity int default 1,
+       primary key(idPseller, idProduct),
+       constraint fk_product_seller foreign key (idPseller) references seller(idseller),
+       constraint fk_product_prodcut foreign key (idProduct) references product(idProduct)
+       );
+       
+-- Criar Relacioanmento de tabelas Produt/Pedido
+create table productOrder(
+	   idPOproduct int,
+       idPorder int,
+       productOrder int default 1,
+       poStatus enum('Disponivel' , 'Sem Estoque') default 'Disponível',
+       primary key(idPOproduct, idPorder),
+       constraint fk_product_Orderseller foreign key (idPOproduct) references product(idProduct),
+       constraint fk_product_Orderprodcut foreign key (idPorder) references orders(idOrder)
+       );
+
+
+-- Criar Relacioanmento de tabelas Produt/Estoque
+create table storageLocations(
+	   idLOproduct int,
+       idLStorage int,
+       location varchar(250) not null,
+	   primary key(idLOproduct, idLStorage),
+       constraint fk_storage_location_product foreign key (idLOproduct) references product(idProduct),
+       constraint fk_storage_location_storage foreign key (idLStorage) references productStorage(idProdStorage)
+       );
+       
+ -- Criar Relacioanmento de tabelas Produt/Fornecedor  
+
+ create table productSupplier(
+       idPsSupplier int, 
+       idPsProduct int,
+       quantity int not null,
+	   primary key(idPsSupplier, idPsProduct),
+       constraint fk_storage_supplier_supplier foreign key (idPsSupplier) references supplier(idSupplier),
+       constraint fk_storage_supplier_product  foreign key (idPsProduct) references product(idProduct)
+              
+       );
+       
+       
+-- Verificar os schemas/constraint nas tabelas  
+-- show databases;
+-- use information_schema;
+-- show tables;
+-- # Tables_in_information_schema
+-- desc REFERENTIAL_CONSTRAINTS;
+-- select * from REFERENTIAL_CONSTRAINTS where CONSTRAINT_SCHEMA  = 'ecommerce';
+
+
+insert into clients(Fname, Minit, Lname, CPF, Address)
+       values ('Maria ' , 'M', 'Silva', 123456789, 'rua silva de prata 29, Carangola - Cidade das Flores'),
+              ('Matheus' , 'O', 'Pimentel', 987654321, 'rua cafu prata 29, Carangola - Cidade das Lira'),
+              ('Ricardo ' , 'L', 'Silva', 45678913 , 'rua messi de prata 29, Carangola - Cidade das Cravos'),
+              ('Julia ' , 'P', 'França', 789123456, 'rua ronaldo de prata 29, Carangola - Cidade das Pimentas'),
+              ('Roberta' , 'Q', 'Assis', 98745631, 'rua dudu de prata 29, Carangola - Cidade das rosas'),
+              ('Isabela ' , 'X', 'Cruz', 654789123, 'rua roney de prata 29, Carangola - Cidade das Almas');
+
+-- 'Eletrônico', 'Vestimento', 'Brinquedos', 'Alimentos', 'Móveis'              
+insert into product(Pname, classification_kids, category, avaliação, size)
+       values ('Fone de ouvido' , false, 'Eletrônico', '4', null),
+              ('Barbie Elsa'    , true,  'Brinquedos', '2', null),
+              ('Body Carter'    , true,  'Vestimento', '3', null),
+              ('Microfone'      , false, 'Eletrônico', '5', null),
+              ('Sofá Retratil'  , false, 'Móveis',    '6', '3x57x80'),
+              ('Farinha trigo'  , false, 'Alimentos', '4', null),
+              ('Celular Lg'     , false, 'Eletrônico', '4', null);
+              
+ insert into  paycard( idPayment, Bandeira, numberCard, validCardMes, validCardAno, cvcCard)
+       values (1 , 'MasterCard'  ,  555567891011123, 01, 23, 565),
+              (2 , 'MasterCard'  ,  555567891011124, 05, 23, 565),
+              (3 , 'Visa'        ,  444047891011123, 03, 23, 565),
+              (4 , 'Visa'        ,  444467891011124, 02, 23, 565);
+
+
+ insert into  payments( idClient, typePayments, limitAvaliable)
+       values (1 , 'boleto'  ,  1000),
+              (2 , 'Cartão'  ,  3000),
+              (3 , 'Cartão'  ,  4000),
+              (4 , 'Cartão'  ,  5000);              
+              
+ insert into orders(idOrderClient, orderStatus, orderDescription, sendValue, paymentCash)
+       values (1 , default      ,  'Compra via app', null , 1),
+              (2 , default      ,  'Compra via app', 50   , 0),
+              (3 , 'Confirmado' ,  null            , null , 1),
+              (4 , default      ,  'Compra site'   , 150  , 0);
+
+-- select * from product;
+-- select * from orders;
+
+insert into productOrder( idPOproduct, idPorder, poQuantity, poStatus)
+       values (1,1,2,null), 
+              (2,2,1,null),
+              (3,3,1,null);
+ 
+ insert into productStorage(storageLocation, quantity) 
+       values ('Rio de Janeiro' , 1000),
+              ('Rio de Janeiro' , 500),
+              ('São Paulo' , 10),
+              ('São Paulo' , 100),
+              ('São Paulo' , 10),
+			  ('Brasilia' , 60);
+              
+ insert into storageLocations(idLOproduct, idLStorage, location)
+         values(1,2,'RJ'),
+               (2,6,'GO');
+
+
+       
+insert into supplier(SocialName, CNPJ, contact)
+       values ('Almeida Alves', 123456789123456, '21365545'),
+              ('Almeida Ramos', 854519649143457, '21365545'), 
+              ('Almeida Lagos', 931567983734695, '21365545');
+
+
+insert into productSupplier(idPsSupplier, idPsProduct, quantity)
+       values (1,1,500),
+              (1,2,400), 
+              (2,4,633),
+              (2,3,5),
+              (2,5,10);
+              
+
+insert into seller(SocialName, AbstName, CNPJ, CPF, location, contact)     
+       values ('Tech Eletronicos', null, 123456789123456, null, 'Rio de Janeiro','21365545'), 
+              ('Boutique Durgas' , null, null,123456783, 'Rio de Janeiro', '21365545'), 
+              ('Kids World'     ,  null, 931567983734695, null,'São Paulo','21365545');
+              
+ insert into productSeller(idPseller, idProduct, prodQuantity)
+       values (1,6,80),
+              (2,7,10); 
+  
+
+ -- Recuperações simples com SELECT Statement   
+show tables;
+-- Select na tabela Cliente 
+select * from clients;
+-- Select na tabela Pedido
+select * from orders;
+-- Select na tabela Pagamento cartão
+select * from paycard;
+-- Select na tabela Pagamento
+select * from payments;
+-- Select na tabela Produto
+select * from product;
+-- Select na Relacioanmento de tabelas Produt/Pedido
+select * from productorder;
+-- Select na tabela Relacioanmento de tabelas Produt/Vendedor
+select * from productseller;
+-- Select na tabela Estoque
+select * from productstorage;
+ -- Select na Relacioanmento de tabelas Produt/Fornecedor  
+select * from productsupplier;
+-- Select na tabela Vendedor
+select * from seller;
+-- Select na Relacioanmento de tabelas Produt/Estoque
+select * from storagelocations;
+-- Select na tabela Fornecedor
+select * from supplier;
+ 
+ 
+ -- Select com where onde as chaves são iguais na tabela clients e orderm de pedidos
+ select Fname, Lname, Minit, CPF from clients c, orders o where (c.idClient = o.idOrderClient);
+ 
+  
+-- Recuperando tabelas clientes com pagamentos
+select Fname, Lname, Minit, CPF from clients c, payments p  where c.idClient = p.idClient;
+
+
+--  Select com and com busca para nome, nome do meio e sobrenome
+select Fname, Lname, Minit, CPF from clients
+       where Fname = 'Matheus' and Minit='O' and Lname='Pimentel';
+       
+ --  Select recuperando dados da tabela cliente com todos os nomes 'Matheus'.
+select * from clients
+       where Fname = 'Matheus' ;      
+
+
+-- Select em duas tabelas        
+select * from product, seller
+       where idProduct = idseller;
+       
+       
+-- Retira a ambiguidade atraves da alias ou AS Statements com dois campos com mesmo nome de campos em tabelas diferentes
+select Fname as Nome, Lname as Sobrenome
+       from clients as c, seller as s
+       where c.CPF = s.CPF;
+ 
+  -- Select com where com order by
+ select Fname, Lname, Minit, CPF from clients c, orders o 
+ where (c.idClient = o.idOrderClient)
+  order by Fname;
+ 
+  -- Select com where com order by
+  -- Select concatenado
+select concat(Fname, ' ', Minit, ' ', Lname), CPF, Address as clients from clients
+ order by Fname;
+ 
+ -- Select com count
+ select concat(Fname, ' ', Minit, ' ', Lname), CPF, Address as clients from clients
+ WHERE (select count(*) from payments where idClient=idPayment)>=4;
+ 
+ 
+ -- having ele possibilita colocar uma condição em cima do atributo
+ select Pname, Classification_kids, count(*) as quantidade
+   from product, productOrder, orders
+   where idProduct=idPOproduct and idPorder=idOrder 
+   group by  Pname, Classification_kids
+   having count(*) > 1;
+  
+  select typePayments as tipo_de_pagamento, count(*) as quantidade_de_pagamento
+   from payments
+   where limitAvaliable > 100
+   group by typePayments
+   having count(*) >=1
+   order by avg(typePayments) desc;
+   
+ -- group by ele agrega o valor e agrupa mostra no count
+select typePayments as tipo_pgto , count(*) as quantidade_pgto, round(avg(limitAvaliable),1000) as media from payments
+   group by typePayments;
+   
+select * from payments;   
+Select * from clients join payments;
+Select * from clients join payments on idPayment = idPayment;
+Select * from payments join paycard
+where bandeira = 'MasterCard';
+  
+  select Fname, Lname, Address
+       from (clients as c join  payments as p on c.idClient=p.idClient)
+       where Fname='Maria ';
+       
+  -- Select em dusas tabelas com join 
+  select Fname, Lname, Address
+       from clients join payments using(idClient);
+      
+  -- Select com todos os dados para mostrar com duas tabelas com join     
+   select *
+       from clients join payments using(idClient);     
+       select * from clients;
+       
+-- CROOSS JOIN - PRODUTO CARTESIANO
+Select * from product cross join productSeller;       
+
+-- inner join de 3 tabelas onde as chaves são iguais
+-- on com a tabela de cima é primeiro = (ON)
+desc employee;
+Select * from orders       
+       inner join productOrder on idPorder=idOrder
+       inner join product on idProduct=idPOproduct
+       order by idOrder;
+ 
+Select * from orders       
+       inner join productOrder on idPorder=idOrder
+       inner join product on idProduct=idPOproduct 
+         where Pname like '%A%' or '%S	%'
+       order by idOrder;
+       
+       
 
